@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Create GitHub PullRequest of bundle update in Jenkins'
   spec.description   = 'A script for continues bundle update. Use in Jenkins'
-  spec.homepage      = 'https://github.com/naviplus-asp/circleci-bundle-update-pr'
+  spec.homepage      = 'https://github.com/naviplus-asp/jenkins-bundle-update-pr'
   spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
