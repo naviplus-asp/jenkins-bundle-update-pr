@@ -8,7 +8,7 @@ require 'octokit'
 class CompareLinker
   def make_compare_links
     if octokit.pull_request_files(repo_full_name, pr_number).find do |resource|
-      resource.filename == 'Gemfile.lock' || content.name == 'config/Gemfile.lock'
+      resource.filename == 'Gemfile.lock' || resource.filename == 'config/Gemfile.lock'
     end
       pull_request = octokit.pull_request(repo_full_name, pr_number)
 
