@@ -39,7 +39,7 @@ module Jenkins
           system("git config user.name #{git_username}")
           system("git config user.email #{git_email}")
           system("git checkout -b #{branch}")
-          system('git add Gemfile.lock')
+          system('git add Gemfile.lock config/Gemfile.lock')
           system("git commit -m 'bundle update'")
           system("git push origin #{branch}")
         end
