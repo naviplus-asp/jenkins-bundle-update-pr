@@ -8,7 +8,7 @@ require 'octokit'
 class CompareLinker
   def make_compare_links
     if octokit.pull_request_files(repo_full_name, pr_number).find do |resource|
-      resource.filename == 'Gemfile.lock' || resource.filename == 'config/Gemfile.lock'
+      resource.filename == 'config/Gemfile.lock' || resource.filename == 'Gemfile.lock'
     end
       pull_request = octokit.pull_request(repo_full_name, pr_number)
 
@@ -18,20 +18,20 @@ class CompareLinker
 
       comparator = LockfileComparator.new
       comparator.compare(old_lockfile, new_lockfile)
-      @compare_links = comparator.updated_gems.map do |gem_name, gem_info|
+      @compare_links = comparator.updated_gems.map { |gem_name, gem_info|
         if gem_info[:owner].nil?
-          finder = GithubLinkFinder.new(octokit)
+          finder = GithubLinkFinder.new(octokit, gem_dictionary)
           finder.find(gem_name)
+          gem_info[:homepage_uri] = finder.homepage_uri
           if finder.repo_owner.nil?
-            gem_info[:homepage_uri] = finder.homepage_uri
             formatter.format(gem_info)
           else
             gem_info[:repo_owner] = finder.repo_owner
             gem_info[:repo_name] = finder.repo_name
 
-            tag_finder = GithubTagFinder.new(octokit)
-            old_tag = tag_finder.find(finder.repo_full_name, gem_info[:old_ver])
-            new_tag = tag_finder.find(finder.repo_full_name, gem_info[:new_ver])
+            tag_finder = GithubTagFinder.new(octokit, gem_name, finder.repo_full_name)
+            old_tag = tag_finder.find(gem_info[:old_ver])
+            new_tag = tag_finder.find(gem_info[:new_ver])
 
             if old_tag && new_tag
               gem_info[:old_tag] = old_tag.name
@@ -44,18 +44,19 @@ class CompareLinker
         else
           formatter.format(gem_info)
         end
-      end
+      }
       @compare_links
     end
   end
 
   class LockfileFetcher
     def fetch(repo_full_name, ref)
-      lockfile_content = octokit.contents(
-        repo_full_name, ref: ref
-      ).find do |content|
-        content.name == 'Gemfile.lock' || content.name == 'config/Gemfile.lock'
-      end
+      lockfile_content =
+        begin
+          octokit.contents(repo_full_name, path: 'config/Gemfile.lock', ref: ref)
+        rescue Octokit::NotFound
+          octokit.contents(repo_full_name, path: 'Gemfile.lock', ref: ref)
+        end
       Bundler::LockfileParser.new(
         Base64.decode64(
           octokit.blob(repo_full_name, lockfile_content.sha).content
