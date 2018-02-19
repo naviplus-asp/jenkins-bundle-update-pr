@@ -100,7 +100,8 @@ module Jenkins
           system("git config user.name #{git_username}")
           system("git config user.email #{git_email}")
           system("git checkout -b #{branch}")
-          system('git add Gemfile.lock config/Gemfile.lock')
+          system('git add Gemfile.lock') if File.exist?('Gemfile.lock')
+          system('git add config/Gemfile.lock') if File.exist?('config/Gemfile.lock')
           system("git commit -m 'bundle update'")
           system("git push origin #{branch}")
         end
